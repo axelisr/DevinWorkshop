@@ -1,0 +1,187 @@
+{
+  "repo_notes": [
+    {
+      "author": "DevinWorkshop maintainers",
+      "content": "PiggyMetrics is a legacy reference implementation of microservices on Spring Boot 2.0.3 / Spring Cloud Finchley with Netflix OSS (Eureka, Zuul 1, Ribbon, Hystrix, Turbine), Feign, Sleuth and spring-security-oauth2. Readers are engineers learning the architecture or planning its modernization: explain how the pieces interact at runtime and cite the code, instead of paraphrasing README.md. Treat config/src/main/resources/shared/*.yml (served by the Config Server with the native profile) as the source of truth for ports, routes, timeouts, cron expressions, OAuth2 clients and service URLs, and cite those files. Ports: gateway 4000 (published as 80), registry 8761, config 8888, auth-service 5000 (/uaa), account-service 6000 (/accounts), statistics-service 7000 (/statistics), notification-service 8000 (/notifications), turbine-stream-service 8080 (no server.port is set; docker-compose.yml publishes 8989:8989), monitoring 8080 (published as 9000), RabbitMQ 5672/15672, one MongoDB per service on 27017. OAuth2 clients (auth-service OAuth2AuthorizationConfig): browser (password + refresh_token, scope ui) and account-service / statistics-service / notification-service (client_credentials + refresh_token, scope server). Feign clients: account-service -> auth-service (AuthServiceClient) and statistics-service (StatisticsServiceClient with StatisticsServiceClientFallback); notification-service -> account-service (AccountServiceClient); statistics-service -> api.exchangeratesapi.io (ExchangeRatesClient with ExchangeRatesClientFallback)."
+    },
+    {
+      "author": "DevinWorkshop maintainers",
+      "content": "Flag anything legacy, end-of-life or broken today instead of presenting it as current, and link to the Known Issues & Workarounds page. Specifically: the build requires JDK 8; every Dockerfile uses the java:8-jre base image, which was removed from Docker Hub (eclipse-temurin:8-jre is a drop-in replacement, e.g. by retagging it as java:8-jre); .travis.yml (dist: trusty, oraclejdk8, encrypted Docker Hub credentials) and the sqshq/* images pulled by docker-compose.yml come from the upstream project and are not run or published by this repository; api.exchangeratesapi.io now requires an access key, so the landing page (gateway static/js/launch.js) shows NaN and statistics-service cannot fetch rates in ExchangeRatesServiceImpl; the ELK log analysis stack and Zipkin server mentioned in README.md are not part of this repository (only spring-cloud-starter-sleuth is on the classpath); the passwords in .env are development defaults. Spring Boot 2.0.x, Spring Cloud Finchley, Zuul 1, Ribbon, Hystrix and spring-security-oauth2 are end-of-life or in maintenance mode."
+    },
+    {
+      "author": "DevinWorkshop maintainers",
+      "content": "Writing conventions: parent pages are short navigation summaries (what the section covers, how its child pages relate, one diagram) and must not repeat child page content. Every service page uses the same structure: responsibility, REST endpoints (method, path, required OAuth2 scope from @PreAuthorize), domain model and MongoDB collections, configuration keys from its shared/*.yml, outbound calls (Feign client, fallback, Hystrix/Ribbon settings) and tests under src/test. Prefer sequence diagrams for request flows and tables for ports, routes, endpoints, config keys and known issues. Do not spend pages or detail on static assets (fonts, sprites, images, CSS), .gitignore, LICENCE or issue templates; mention them in one line at most."
+    }
+  ],
+  "pages": [
+    {
+      "title": "Overview",
+      "purpose": "What PiggyMetrics is, the functional vs infrastructure service split, a service topology diagram, the Maven module map (one row per module with its port and role), and a reading guide to the rest of the wiki"
+    },
+    {
+      "title": "Architecture & Service Topology",
+      "parent": "Overview",
+      "purpose": "How the services are wired at runtime: Config Server bootstrap (bootstrap.yml in every module), Eureka registration and lookup, Zuul routing, OAuth2 token issuance and validation, RabbitMQ as the Turbine transport, and startup ordering and healthchecks in docker-compose.yml"
+    },
+    {
+      "title": "End-to-End Request Flows",
+      "parent": "Overview",
+      "purpose": "Sequence diagrams of the main user and system flows across gateway, auth-service, account-service, statistics-service and notification-service",
+      "page_notes": [
+        {
+          "content": "Cover at least: (1) login: the browser gets a password-grant token from /uaa/oauth/token through the gateway (login.js); (2) registration: POST /accounts/ creates the user in auth-service through AuthServiceClient, then saves the account; (3) saving the account: PUT /accounts/current, then StatisticsServiceClient.updateStatistics, falling back to StatisticsServiceClientFallback when statistics-service is down; (4) the notification-service scheduled jobs (remind.cron and backup.cron in shared/notification-service.yml) that call account-service with a client_credentials token and send email. Cite the controllers, Feign clients and services involved."
+        }
+      ]
+    },
+    {
+      "title": "Getting Started & Local Development",
+      "parent": "Overview",
+      "purpose": "Build and run locally: prerequisites, mvn package, docker-compose.yml with docker-compose.dev.yml, the .env password variables, published ports and the important URLs",
+      "page_notes": [
+        {
+          "content": "State the prerequisites explicitly: JDK 8 (newer JDKs fail with Boot 2.0.3), Maven and Docker with Compose. Explain the difference between production mode (docker-compose.yml alone pulls sqshq/* images) and development mode (adding docker-compose.dev.yml builds local images and publishes service, RabbitMQ and Mongo ports 25000-28000). Include one table with every published port from both compose files. Point out that java:8-jre must be replaced or retagged before docker compose --build works, and link to Known Issues & Workarounds."
+        }
+      ]
+    },
+    {
+      "title": "Known Issues & Workarounds",
+      "parent": "Overview",
+      "purpose": "What is broken or outdated when running the repository today: symptom, root cause in code or config, and workaround",
+      "page_notes": [
+        {
+          "content": "Use a table with Symptom / Cause / Workaround columns and one row per issue: removed java:8-jre base image; exchangeratesapi.io requiring an access key (NaN on the landing page from launch.js, no rates in ExchangeRatesServiceImpl, ExchangeRatesClientFallback behaviour); the Hystrix dashboard stream URL must be http://turbine-stream-service:8080/turbine/turbine.stream because the dashboard fetches the stream server-side, so localhost:8989 does not work; Travis CI pipeline and sqshq/* images not maintained here; JDK 8 requirement; development-only passwords in .env."
+        }
+      ]
+    },
+    {
+      "title": "Business Microservices",
+      "purpose": "Short summary of account, statistics and notification services: responsibilities, data ownership (one MongoDB each) and how they call each other"
+    },
+    {
+      "title": "Account Service",
+      "parent": "Business Microservices",
+      "purpose": "account-service: AccountController endpoints, AccountServiceImpl logic, Account/Item/Saving/User domain, AuthServiceClient and StatisticsServiceClient with its fallback, ResourceServerConfig and CustomUserInfoTokenServices, ErrorHandler, and its tests"
+    },
+    {
+      "title": "Statistics Service",
+      "parent": "Business Microservices",
+      "purpose": "statistics-service: StatisticsController endpoints, StatisticsServiceImpl creating DataPoints, ExchangeRatesServiceImpl and ExchangeRatesClient with its fallback, DataPointRepository and the DataPointId converters, and its tests"
+    },
+    {
+      "title": "Notification Service",
+      "parent": "Business Microservices",
+      "purpose": "notification-service: RecipientController endpoints, Recipient/NotificationSettings/Frequency domain and converters, the remind and backup scheduled jobs in NotificationServiceImpl, EmailServiceImpl and its SMTP settings, AccountServiceClient, and its tests"
+    },
+    {
+      "title": "Domain Model & Currency Normalization",
+      "parent": "Business Microservices",
+      "purpose": "The Account, Item, Saving, Currency and TimePeriod model duplicated in account-service and statistics-service, and how StatisticsServiceImpl normalizes amounts to a base currency and time period into DataPoint, ItemMetric and StatisticMetric time series"
+    },
+    {
+      "title": "Security & Authentication",
+      "purpose": "Short summary of the OAuth2 model: auth-service as Authorization Server, the other services as Resource Servers, user tokens vs client_credentials tokens"
+    },
+    {
+      "title": "Auth Service (Authorization Server)",
+      "parent": "Security & Authentication",
+      "purpose": "auth-service: OAuth2AuthorizationConfig clients, grant types and scopes, token store, WebSecurityConfig, MongoUserDetailsService, UserController and UserServiceImpl, and its tests"
+    },
+    {
+      "title": "Resource Servers & Token Propagation",
+      "parent": "Security & Authentication",
+      "purpose": "How account, statistics and notification services validate tokens (ResourceServerConfig, security.oauth2.resource.user-info-uri, CustomUserInfoTokenServices), how @PreAuthorize scopes protect endpoints, and how Feign calls obtain client_credentials tokens"
+    },
+    {
+      "title": "Infrastructure Services",
+      "purpose": "Short summary of the Config Server, Eureka registry, MongoDB containers and RabbitMQ, and what each business service depends on at startup"
+    },
+    {
+      "title": "Config Server & Centralized Configuration",
+      "parent": "Infrastructure Services",
+      "purpose": "config module: native profile serving classpath:/shared, SecurityConfig and its password, how each module's bootstrap.yml fetches config, and a table of the key settings in each shared/*.yml"
+    },
+    {
+      "title": "Service Registry (Eureka)",
+      "parent": "Infrastructure Services",
+      "purpose": "registry module: Eureka server configuration, client registration settings in shared/application.yml, and how Zuul, Ribbon and Feign resolve service names through it"
+    },
+    {
+      "title": "MongoDB Containers & Data Seeding",
+      "parent": "Infrastructure Services",
+      "purpose": "mongodb module: the shared Dockerfile and init.sh, the demo data under mongodb/dump, per-service database credentials, and the published dev ports"
+    },
+    {
+      "title": "Resilience & Observability",
+      "purpose": "Short summary of how the system tolerates failing services and how it is monitored and traced"
+    },
+    {
+      "title": "Inter-Service Communication: Feign, Ribbon & Hystrix",
+      "parent": "Resilience & Observability",
+      "purpose": "Every Feign client with its target and fallback, Ribbon load balancing through Eureka, Hystrix timeouts and fallbacks configured in shared/*.yml, and what the user sees when a dependency is down"
+    },
+    {
+      "title": "Monitoring: Hystrix Dashboard & Turbine",
+      "parent": "Resilience & Observability",
+      "purpose": "monitoring module (Hystrix dashboard) and turbine-stream-service (WebFlux/Netty Turbine stream fed over RabbitMQ): how metrics flow from the services, and the stream URL to use in the dashboard"
+    },
+    {
+      "title": "Logging & Distributed Tracing",
+      "parent": "Resilience & Observability",
+      "purpose": "What Spring Cloud Sleuth adds (trace and span IDs in logs, propagation through Feign and Zuul), which modules include it, and what the README describes (ELK, Zipkin) but this repository does not deploy"
+    },
+    {
+      "title": "Gateway & Web Frontend",
+      "purpose": "Short summary of the Zuul edge service and the single-page UI it serves from gateway/src/main/resources/static"
+    },
+    {
+      "title": "Zuul Gateway & API Routes",
+      "parent": "Gateway & Web Frontend",
+      "purpose": "gateway module: GatewayApplication, the route table from shared/gateway.yml (path, target service, strip-prefix, sensitive headers), Hystrix and Ribbon timeouts, and how the UI and API share port 80"
+    },
+    {
+      "title": "Frontend SPA",
+      "parent": "Gateway & Web Frontend",
+      "purpose": "The jQuery single-page app: launch.js, login.js, main.js and dashboard.js, how it stores the OAuth2 token and calls /accounts, /statistics and /notifications, the save permit flag, and the exchange-rate dependency",
+      "page_notes": [
+        {
+          "content": "Focus on the JavaScript behaviour and its API calls. Mention CSS, fonts and images in a single sentence; do not list asset files."
+        }
+      ]
+    },
+    {
+      "title": "REST API Reference",
+      "purpose": "One table per service with every endpoint as exposed through the gateway: method, path, required scope or demo exception, request and response body, and the controller method that handles it"
+    },
+    {
+      "title": "Testing Strategy",
+      "purpose": "How the 25 test classes are organized per module: controller tests with MockMvc, repository tests on embedded MongoDB, service tests with Mockito, fallback tests, context-load tests; how to run them (mvn test, per module with -pl) and what is not covered"
+    },
+    {
+      "title": "Build, CI/CD & Deployment",
+      "purpose": "Short summary of the Maven build, the Docker images and the inherited CI pipeline"
+    },
+    {
+      "title": "Maven Multi-Module Build",
+      "parent": "Build, CI/CD & Deployment",
+      "purpose": "Parent pom.xml: Spring Boot and Spring Cloud versions, modules, plugin configuration, per-module dependencies and version pins, and the JDK 8 requirement"
+    },
+    {
+      "title": "Docker Images & Compose",
+      "parent": "Build, CI/CD & Deployment",
+      "purpose": "The per-module Dockerfiles (java:8-jre base, ADD of the built jar, the config healthcheck used by depends_on: service_healthy), docker-compose.yml vs docker-compose.dev.yml, environment variables from .env, restart policies and dependencies"
+    },
+    {
+      "title": "Travis CI Pipeline (Legacy)",
+      "parent": "Build, CI/CD & Deployment",
+      "purpose": "What .travis.yml did upstream (build, tests, Codecov upload, image tagging with the commit SHA and push to Docker Hub) and why it does not run for this repository"
+    },
+    {
+      "title": "Modernization & Technical Debt",
+      "purpose": "End-of-life components and their usual replacements (Boot 3.x and Java 17+, Spring Cloud Gateway for Zuul, Spring Cloud LoadBalancer for Ribbon, Resilience4j for Hystrix, Spring Authorization Server for spring-security-oauth2, Micrometer Tracing for Sleuth, GitHub Actions for Travis), duplicated domain code, hard-coded secrets, and a suggested migration order"
+    },
+    {
+      "title": "Glossary",
+      "purpose": "Domain terms (Account, Item, Saving, TimePeriod, DataPoint, ItemMetric, StatisticMetric, Recipient, Frequency, demo account, save permit) and infrastructure terms (Config Server, Eureka, Zuul, Ribbon, Hystrix, Turbine, Feign, Sleuth, OAuth2 scopes ui and server) with links to the code"
+    }
+  ]
+}
