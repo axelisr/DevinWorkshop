@@ -6,12 +6,15 @@ import com.piggymetrics.notification.domain.NotificationSettings;
 import com.piggymetrics.notification.domain.NotificationType;
 import com.piggymetrics.notification.domain.Recipient;
 import org.apache.commons.lang.time.DateUtils;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -25,6 +28,11 @@ public class RecipientRepositoryTest {
 
 	@Autowired
 	private RecipientRepository repository;
+
+	@Before
+	public void setup() {
+		repository.deleteAll();
+	}
 
 	@Test
 	public void shouldFindByAccountName() {
@@ -150,5 +158,83 @@ public class RecipientRepositoryTest {
 
 		List<Recipient> found = repository.findReadyForBackup();
 		assertFalse(found.isEmpty());
+	}
+
+	@Test
+	public void shouldNotFindReadyForBackupWhenFrequencyIsQuarterlyAndLastNotifiedWas40DaysAgo() {
+
+		saveRecipient(NotificationType.BACKUP, settings(true, Frequency.QUARTERLY, DateUtils.addDays(new Date(), -40)));
+
+		assertTrue(repository.findReadyForBackup().isEmpty());
+	}
+
+	@Test
+	public void shouldFindReadyForRemindWhenFrequencyIsMonthlyAndLastNotifiedWas31DaysAgo() {
+
+		saveRecipient(NotificationType.REMIND, settings(true, Frequency.MONTHLY, DateUtils.addDays(new Date(), -31)));
+
+		assertEquals(1, repository.findReadyForRemind().size());
+		assertTrue(repository.findReadyForBackup().isEmpty());
+	}
+
+	@Test
+	public void shouldNotFindReadyForRemindWhenLastNotifiedIsMissing() {
+
+		saveRecipient(NotificationType.REMIND, settings(true, Frequency.WEEKLY, null));
+
+		assertTrue(repository.findReadyForRemind().isEmpty());
+	}
+
+	@Test
+	public void shouldSelectOnlyRecipientsNotifiedStrictlyBeforeCutoff() {
+
+		Date cutoff = DateUtils.addDays(new Date(), -7);
+		Date never = new Date(0);
+
+		saveRecipient(NotificationType.REMIND, settings(true, Frequency.WEEKLY, cutoff));
+		assertTrue(repository.findReadyForRemind(cutoff, never, never).isEmpty());
+
+		saveRecipient(NotificationType.REMIND, settings(true, Frequency.WEEKLY, new Date(cutoff.getTime() - 1)));
+		assertEquals(1, repository.findReadyForRemind(cutoff, never, never).size());
+	}
+
+	@Test
+	public void shouldUseCalendarDaysWhenWeeklyCutoffCrossesSpringForwardTransition() {
+
+		ZoneId zone = ZoneId.of("America/New_York");
+		ZonedDateTime now = ZonedDateTime.of(2026, 3, 9, 12, 0, 0, 0, zone);
+		Date lastNotified = Date.from(ZonedDateTime.of(2026, 3, 2, 11, 30, 0, 0, zone).toInstant());
+
+		saveRecipient(NotificationType.REMIND, settings(true, Frequency.WEEKLY, lastNotified));
+
+		assertEquals(1, repository.findReadyForRemind(now).size());
+	}
+
+	@Test
+	public void shouldUseCalendarDaysWhenWeeklyCutoffCrossesFallBackTransition() {
+
+		ZoneId zone = ZoneId.of("America/New_York");
+		ZonedDateTime now = ZonedDateTime.of(2026, 11, 2, 12, 0, 0, 0, zone);
+		Date lastNotified = Date.from(ZonedDateTime.of(2026, 10, 26, 12, 30, 0, 0, zone).toInstant());
+
+		saveRecipient(NotificationType.BACKUP, settings(true, Frequency.WEEKLY, lastNotified));
+
+		assertTrue(repository.findReadyForBackup(now).isEmpty());
+	}
+
+	private NotificationSettings settings(boolean active, Frequency frequency, Date lastNotified) {
+		NotificationSettings settings = new NotificationSettings();
+		settings.setActive(active);
+		settings.setFrequency(frequency);
+		settings.setLastNotified(lastNotified);
+		return settings;
+	}
+
+	private void saveRecipient(NotificationType type, NotificationSettings settings) {
+		Recipient recipient = new Recipient();
+		recipient.setAccountName("test");
+		recipient.setEmail("test@test.com");
+		recipient.setScheduledNotifications(ImmutableMap.of(type, settings));
+		repository.save(recipient);
 	}
 }

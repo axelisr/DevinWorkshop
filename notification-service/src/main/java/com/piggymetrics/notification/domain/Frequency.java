@@ -1,5 +1,7 @@
 package com.piggymetrics.notification.domain;
 
+import java.time.ZonedDateTime;
+import java.util.Date;
 import java.util.stream.Stream;
 
 public enum Frequency {
@@ -14,6 +16,14 @@ public enum Frequency {
 
 	public int getDays() {
 		return days;
+	}
+
+	/**
+	 * Subtracts calendar days (not fixed 24h periods) in {@code now}'s zone, matching the
+	 * JavaScript {@code Date.setDate} arithmetic of the former {@code $where} queries across DST changes.
+	 */
+	public Date cutoff(ZonedDateTime now) {
+		return Date.from(now.minusDays(days).toInstant());
 	}
 
 	public static Frequency withDays(int days) {
