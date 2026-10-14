@@ -6,9 +6,9 @@ import org.springframework.data.mongodb.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 @Repository
 public interface RecipientRepository extends CrudRepository<Recipient, String> {
@@ -29,18 +29,18 @@ public interface RecipientRepository extends CrudRepository<Recipient, String> {
 	List<Recipient> findReadyForRemind(Date weeklyCutoff, Date monthlyCutoff, Date quarterlyCutoff);
 
 	default List<Recipient> findReadyForBackup() {
-		long now = System.currentTimeMillis();
-		return findReadyForBackup(
-				new Date(now - TimeUnit.DAYS.toMillis(Frequency.WEEKLY.getDays())),
-				new Date(now - TimeUnit.DAYS.toMillis(Frequency.MONTHLY.getDays())),
-				new Date(now - TimeUnit.DAYS.toMillis(Frequency.QUARTERLY.getDays())));
+		return findReadyForBackup(ZonedDateTime.now());
+	}
+
+	default List<Recipient> findReadyForBackup(ZonedDateTime now) {
+		return findReadyForBackup(Frequency.WEEKLY.cutoff(now), Frequency.MONTHLY.cutoff(now), Frequency.QUARTERLY.cutoff(now));
 	}
 
 	default List<Recipient> findReadyForRemind() {
-		long now = System.currentTimeMillis();
-		return findReadyForRemind(
-				new Date(now - TimeUnit.DAYS.toMillis(Frequency.WEEKLY.getDays())),
-				new Date(now - TimeUnit.DAYS.toMillis(Frequency.MONTHLY.getDays())),
-				new Date(now - TimeUnit.DAYS.toMillis(Frequency.QUARTERLY.getDays())));
+		return findReadyForRemind(ZonedDateTime.now());
+	}
+
+	default List<Recipient> findReadyForRemind(ZonedDateTime now) {
+		return findReadyForRemind(Frequency.WEEKLY.cutoff(now), Frequency.MONTHLY.cutoff(now), Frequency.QUARTERLY.cutoff(now));
 	}
 }

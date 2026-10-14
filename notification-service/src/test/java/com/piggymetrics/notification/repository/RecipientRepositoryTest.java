@@ -13,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -194,6 +196,30 @@ public class RecipientRepositoryTest {
 
 		saveRecipient(NotificationType.REMIND, settings(true, Frequency.WEEKLY, new Date(cutoff.getTime() - 1)));
 		assertEquals(1, repository.findReadyForRemind(cutoff, never, never).size());
+	}
+
+	@Test
+	public void shouldUseCalendarDaysWhenWeeklyCutoffCrossesSpringForwardTransition() {
+
+		ZoneId zone = ZoneId.of("America/New_York");
+		ZonedDateTime now = ZonedDateTime.of(2026, 3, 9, 12, 0, 0, 0, zone);
+		Date lastNotified = Date.from(ZonedDateTime.of(2026, 3, 2, 11, 30, 0, 0, zone).toInstant());
+
+		saveRecipient(NotificationType.REMIND, settings(true, Frequency.WEEKLY, lastNotified));
+
+		assertEquals(1, repository.findReadyForRemind(now).size());
+	}
+
+	@Test
+	public void shouldUseCalendarDaysWhenWeeklyCutoffCrossesFallBackTransition() {
+
+		ZoneId zone = ZoneId.of("America/New_York");
+		ZonedDateTime now = ZonedDateTime.of(2026, 11, 2, 12, 0, 0, 0, zone);
+		Date lastNotified = Date.from(ZonedDateTime.of(2026, 10, 26, 12, 30, 0, 0, zone).toInstant());
+
+		saveRecipient(NotificationType.BACKUP, settings(true, Frequency.WEEKLY, lastNotified));
+
+		assertTrue(repository.findReadyForBackup(now).isEmpty());
 	}
 
 	private NotificationSettings settings(boolean active, Frequency frequency, Date lastNotified) {
