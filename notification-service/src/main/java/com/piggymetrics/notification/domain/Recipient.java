@@ -2,6 +2,8 @@ package com.piggymetrics.notification.domain;
 
 import org.hibernate.validator.constraints.Email;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import javax.validation.Valid;
@@ -9,6 +11,12 @@ import javax.validation.constraints.NotNull;
 import java.util.Map;
 
 @Document(collection = "recipients")
+@CompoundIndexes({
+		@CompoundIndex(name = "backup_ready_idx", def = "{'scheduledNotifications.BACKUP.active': 1, " +
+				"'scheduledNotifications.BACKUP.frequency': 1, 'scheduledNotifications.BACKUP.lastNotified': 1}"),
+		@CompoundIndex(name = "remind_ready_idx", def = "{'scheduledNotifications.REMIND.active': 1, " +
+				"'scheduledNotifications.REMIND.frequency': 1, 'scheduledNotifications.REMIND.lastNotified': 1}")
+})
 public class Recipient {
 
 	@Id
