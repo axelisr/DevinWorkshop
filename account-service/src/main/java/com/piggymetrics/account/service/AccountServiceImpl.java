@@ -35,7 +35,7 @@ public class AccountServiceImpl implements AccountService {
 	 */
 	@Override
 	public Account findByName(String accountName) {
-		Assert.hasLength(accountName);
+		Assert.hasLength(accountName, "account name must not be empty");
 		return repository.findByName(accountName);
 	}
 

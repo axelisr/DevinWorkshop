@@ -4,20 +4,21 @@ import com.piggymetrics.account.client.AuthServiceClient;
 import com.piggymetrics.account.client.StatisticsServiceClient;
 import com.piggymetrics.account.domain.*;
 import com.piggymetrics.account.repository.AccountRepository;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
-import static org.mockito.MockitoAnnotations.initMocks;
+import static org.mockito.MockitoAnnotations.openMocks;
 
-public class AccountServiceTest {
+class AccountServiceTest {
 
 	@InjectMocks
 	private AccountServiceImpl accountService;
@@ -31,13 +32,13 @@ public class AccountServiceTest {
 	@Mock
 	private AccountRepository repository;
 
-	@Before
-	public void setup() {
-		initMocks(this);
+	@BeforeEach
+	void setup() {
+		openMocks(this);
 	}
 
 	@Test
-	public void shouldFindByName() {
+	void shouldFindByName() {
 
 		final Account account = new Account();
 		account.setName("test");
@@ -48,13 +49,13 @@ public class AccountServiceTest {
 		assertEquals(account, found);
 	}
 
-	@Test(expected = IllegalArgumentException.class)
-	public void shouldFailWhenNameIsEmpty() {
-		accountService.findByName("");
+	@Test
+	void shouldFailWhenNameIsEmpty() {
+		assertThrows(IllegalArgumentException.class, () -> accountService.findByName(""));
 	}
 
 	@Test
-	public void shouldCreateAccountWithGivenUser() {
+	void shouldCreateAccountWithGivenUser() {
 
 		User user = new User();
 		user.setUsername("test");
@@ -74,7 +75,7 @@ public class AccountServiceTest {
 	}
 
 	@Test
-	public void shouldSaveChangesWhenUpdatedAccountGiven() {
+	void shouldSaveChangesWhenUpdatedAccountGiven() {
 
 		Item grocery = new Item();
 		grocery.setTitle("Grocery");
@@ -137,13 +138,13 @@ public class AccountServiceTest {
 		verify(statisticsClient, times(1)).updateStatistics("test", account);
 	}
 
-	@Test(expected = IllegalArgumentException.class)
-	public void shouldFailWhenNoAccountsExistedWithGivenName() {
+	@Test
+	void shouldFailWhenNoAccountsExistedWithGivenName() {
 		final Account update = new Account();
 		update.setIncomes(Arrays.asList(new Item()));
 		update.setExpenses(Arrays.asList(new Item()));
 
 		when(accountService.findByName("test")).thenReturn(null);
-		accountService.saveChanges("test", update);
+		assertThrows(IllegalArgumentException.class, () -> accountService.saveChanges("test", update));
 	}
 }
