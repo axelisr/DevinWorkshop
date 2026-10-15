@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: notification-service
+  config:
+    # replaces bootstrap.yml (spring-cloud-starter-bootstrap is not used); non-optional import keeps fail-fast semantics
+    import: configserver:http://config:8888
+  cloud:
+    config:
+      fail-fast: true
+      password: ${CONFIG_SERVICE_PASSWORD}
+      username: user
