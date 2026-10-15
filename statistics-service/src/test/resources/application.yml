@@ -1,16 +1,29 @@
-hystrix:
-  command:
-    default:
-      execution:
-        isolation:
-          thread:
-            timeoutInMilliseconds: 20000
-
 spring:
+  application:
+    name: statistics-service
+  cloud:
+    config:
+      enabled: false
+    openfeign:
+      circuitbreaker:
+        enabled: true
   data:
     mongodb:
       database: piggymetrics
-      port: 0
+
+de:
+  flapdoodle:
+    mongodb:
+      embedded:
+        version: 6.0.14
+
+eureka:
+  client:
+    enabled: false
+
+piggymetrics:
+  security:
+    user-info-uri: http://localhost/uaa/users/current
 
 rates:
   url: https://api.exchangeratesapi.io
