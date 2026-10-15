@@ -1,33 +1,30 @@
 package com.piggymetrics.account.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableList;
 import com.piggymetrics.account.domain.*;
 import com.piggymetrics.account.service.AccountService;
 import com.sun.security.auth.UserPrincipal;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
+import static org.mockito.MockitoAnnotations.openMocks;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest
-public class AccountControllerTest {
+class AccountControllerTest {
 
 	private static final ObjectMapper mapper = new ObjectMapper();
 
@@ -39,14 +36,14 @@ public class AccountControllerTest {
 
 	private MockMvc mockMvc;
 
-	@Before
-	public void setup() {
-		initMocks(this);
+	@BeforeEach
+	void setup() {
+		openMocks(this);
 		this.mockMvc = MockMvcBuilders.standaloneSetup(accountController).build();
 	}
 
 	@Test
-	public void shouldGetAccountByName() throws Exception {
+	void shouldGetAccountByName() throws Exception {
 
 		final Account account = new Account();
 		account.setName("test");
@@ -59,7 +56,7 @@ public class AccountControllerTest {
 	}
 
 	@Test
-	public void shouldGetCurrentAccount() throws Exception {
+	void shouldGetCurrentAccount() throws Exception {
 
 		final Account account = new Account();
 		account.setName("test");
@@ -72,7 +69,7 @@ public class AccountControllerTest {
 	}
 
 	@Test
-	public void shouldSaveCurrentAccount() throws Exception {
+	void shouldSaveCurrentAccount() throws Exception {
 
 		Saving saving = new Saving();
 		saving.setAmount(new BigDecimal(1500));
@@ -100,8 +97,8 @@ public class AccountControllerTest {
 		account.setNote("test note");
 		account.setLastSeen(new Date());
 		account.setSaving(saving);
-		account.setExpenses(ImmutableList.of(grocery));
-		account.setIncomes(ImmutableList.of(salary));
+		account.setExpenses(List.of(grocery));
+		account.setIncomes(List.of(salary));
 
 		String json = mapper.writeValueAsString(account);
 
@@ -110,7 +107,7 @@ public class AccountControllerTest {
 	}
 
 	@Test
-	public void shouldFailOnValidationTryingToSaveCurrentAccount() throws Exception {
+	void shouldFailOnValidationTryingToSaveCurrentAccount() throws Exception {
 
 		final Account account = new Account();
 		account.setName("test");
@@ -122,7 +119,7 @@ public class AccountControllerTest {
 	}
 
 	@Test
-	public void shouldRegisterNewAccount() throws Exception {
+	void shouldRegisterNewAccount() throws Exception {
 
 		final User user = new User();
 		user.setUsername("test");
@@ -135,7 +132,7 @@ public class AccountControllerTest {
 	}
 
 	@Test
-	public void shouldFailOnValidationTryingToRegisterNewAccount() throws Exception {
+	void shouldFailOnValidationTryingToRegisterNewAccount() throws Exception {
 
 		final User user = new User();
 		user.setUsername("t");

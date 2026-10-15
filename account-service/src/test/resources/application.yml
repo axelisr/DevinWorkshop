@@ -1,5 +1,36 @@
 spring:
+  application:
+    name: account-service
+  cloud:
+    config:
+      enabled: false
   data:
     mongodb:
       database: piggymetrics
       port: 0
+  security:
+    oauth2:
+      client:
+        registration:
+          account-service:
+            client-id: account-service
+            client-secret: password
+            authorization-grant-type: client_credentials
+            scope: server
+            provider: auth-service
+        provider:
+          auth-service:
+            token-uri: http://localhost:5000/uaa/oauth/token
+      resourceserver:
+        opaquetoken:
+          introspection-uri: http://localhost:5000/uaa/users/current
+
+eureka:
+  client:
+    enabled: false
+
+de:
+  flapdoodle:
+    mongodb:
+      embedded:
+        version: 6.0.11
