@@ -1,0 +1,7 @@
+spring:
+  boot:
+    admin:
+      ui:
+        title: PiggyMetrics Monitoring
+      discovery:
+        ignored-services: monitoring

@@ -176,7 +176,7 @@ public interface StatisticsServiceClient {
 
 ### Monitor dashboard
 
-In this project configuration, each microservice with Hystrix on board pushes metrics to Turbine via Spring Cloud Bus (with AMQP broker). The Monitoring project is just a small Spring boot application with the [Turbine](https://github.com/Netflix/Turbine) and [Hystrix Dashboard](https://github.com/Netflix-Skunkworks/hystrix-dashboard).
+In this project configuration, each microservice with Hystrix on board pushes metrics to Turbine via Spring Cloud Bus (with AMQP broker). The Monitoring project is a small Spring Boot 3 / Java 17 application running [Spring Boot Admin](https://github.com/codecentric/spring-boot-admin), which discovers every service through Eureka and shows its health, metrics and circuit breaker state from Actuator (the Hystrix Dashboard has no Spring Boot 3 release). The screenshots below were taken with the original Hystrix Dashboard.
 
 Let's see observe the behavior of our system under load: Statistics Service imitates a delay during the request processing. The response timeout is set to 1 second:
 
@@ -246,7 +246,7 @@ If you'd like to start applications in Intellij Idea you need to either use [Env
 #### Important endpoints
 - http://localhost:80 - Gateway
 - http://localhost:8761 - Eureka Dashboard
-- http://localhost:9000/hystrix - Hystrix Dashboard (Turbine stream link: `http://turbine-stream-service:8080/turbine/turbine.stream`)
+- http://localhost:9000 - Monitoring (Spring Boot Admin; applications are discovered through Eureka)
 - http://localhost:15672 - RabbitMq management (default login/password: guest/guest)
 
 ## Contributions are welcome!
