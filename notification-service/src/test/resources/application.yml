@@ -12,10 +12,24 @@ backup:
     attachment: backup.json
 
 spring:
+  cloud:
+    config:
+      enabled: false
+  security:
+    oauth2:
+      client:
+        registration:
+          notification-service:
+            client-id: notification-service
+            client-secret: test
+            authorization-grant-type: client_credentials
+            scope: server
+        provider:
+          notification-service:
+            token-uri: http://localhost:5000/uaa/oauth/token
   data:
     mongodb:
       database: piggymetrics
-      port: 0
   mail:
     host: smtp.gmail.com
     port: 465
@@ -31,3 +45,19 @@ spring:
             fallback: false
           ssl:
             enable: true
+
+eureka:
+  client:
+    enabled: false
+
+piggymetrics:
+  security:
+    oauth2:
+      resource:
+        user-info-uri: http://localhost:5000/uaa/users/current
+
+de:
+  flapdoodle:
+    mongodb:
+      embedded:
+        version: 6.0.6

@@ -1,41 +1,38 @@
 package com.piggymetrics.notification.repository;
 
-import com.google.common.collect.ImmutableMap;
 import com.piggymetrics.notification.domain.Frequency;
 import com.piggymetrics.notification.domain.NotificationSettings;
 import com.piggymetrics.notification.domain.NotificationType;
 import com.piggymetrics.notification.domain.Recipient;
-import org.apache.commons.lang.time.DateUtils;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.apache.commons.lang3.time.DateUtils;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
+import java.util.Map;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@RunWith(SpringRunner.class)
 @DataMongoTest
-public class RecipientRepositoryTest {
+class RecipientRepositoryTest {
 
 	@Autowired
 	private RecipientRepository repository;
 
-	@Before
-	public void setup() {
+	@BeforeEach
+	void setup() {
 		repository.deleteAll();
 	}
 
 	@Test
-	public void shouldFindByAccountName() {
+	void shouldFindByAccountName() {
 
 		NotificationSettings remind = new NotificationSettings();
 		remind.setActive(true);
@@ -50,7 +47,7 @@ public class RecipientRepositoryTest {
 		Recipient recipient = new Recipient();
 		recipient.setAccountName("test");
 		recipient.setEmail("test@test.com");
-		recipient.setScheduledNotifications(ImmutableMap.of(
+		recipient.setScheduledNotifications(Map.of(
 				NotificationType.BACKUP, backup,
 				NotificationType.REMIND, remind
 		));
@@ -77,7 +74,7 @@ public class RecipientRepositoryTest {
 	}
 
 	@Test
-	public void shouldFindReadyForRemindWhenFrequencyIsWeeklyAndLastNotifiedWas8DaysAgo() {
+	void shouldFindReadyForRemindWhenFrequencyIsWeeklyAndLastNotifiedWas8DaysAgo() {
 
 		NotificationSettings remind = new NotificationSettings();
 		remind.setActive(true);
@@ -87,7 +84,7 @@ public class RecipientRepositoryTest {
 		Recipient recipient = new Recipient();
 		recipient.setAccountName("test");
 		recipient.setEmail("test@test.com");
-		recipient.setScheduledNotifications(ImmutableMap.of(
+		recipient.setScheduledNotifications(Map.of(
 				NotificationType.REMIND, remind
 		));
 
@@ -98,7 +95,7 @@ public class RecipientRepositoryTest {
 	}
 
 	@Test
-	public void shouldNotFindReadyForRemindWhenFrequencyIsWeeklyAndLastNotifiedWasYesterday() {
+	void shouldNotFindReadyForRemindWhenFrequencyIsWeeklyAndLastNotifiedWasYesterday() {
 
 		NotificationSettings remind = new NotificationSettings();
 		remind.setActive(true);
@@ -108,7 +105,7 @@ public class RecipientRepositoryTest {
 		Recipient recipient = new Recipient();
 		recipient.setAccountName("test");
 		recipient.setEmail("test@test.com");
-		recipient.setScheduledNotifications(ImmutableMap.of(
+		recipient.setScheduledNotifications(Map.of(
 				NotificationType.REMIND, remind
 		));
 
@@ -119,7 +116,7 @@ public class RecipientRepositoryTest {
 	}
 
 	@Test
-	public void shouldNotFindReadyForRemindWhenNotificationIsNotActive() {
+	void shouldNotFindReadyForRemindWhenNotificationIsNotActive() {
 
 		NotificationSettings remind = new NotificationSettings();
 		remind.setActive(false);
@@ -129,7 +126,7 @@ public class RecipientRepositoryTest {
 		Recipient recipient = new Recipient();
 		recipient.setAccountName("test");
 		recipient.setEmail("test@test.com");
-		recipient.setScheduledNotifications(ImmutableMap.of(
+		recipient.setScheduledNotifications(Map.of(
 				NotificationType.REMIND, remind
 		));
 
@@ -140,7 +137,7 @@ public class RecipientRepositoryTest {
 	}
 
 	@Test
-	public void shouldNotFindReadyForBackupWhenFrequencyIsQuaterly() {
+	void shouldNotFindReadyForBackupWhenFrequencyIsQuaterly() {
 
 		NotificationSettings remind = new NotificationSettings();
 		remind.setActive(true);
@@ -150,7 +147,7 @@ public class RecipientRepositoryTest {
 		Recipient recipient = new Recipient();
 		recipient.setAccountName("test");
 		recipient.setEmail("test@test.com");
-		recipient.setScheduledNotifications(ImmutableMap.of(
+		recipient.setScheduledNotifications(Map.of(
 				NotificationType.BACKUP, remind
 		));
 
@@ -161,7 +158,7 @@ public class RecipientRepositoryTest {
 	}
 
 	@Test
-	public void shouldNotFindReadyForBackupWhenFrequencyIsQuarterlyAndLastNotifiedWas40DaysAgo() {
+	void shouldNotFindReadyForBackupWhenFrequencyIsQuarterlyAndLastNotifiedWas40DaysAgo() {
 
 		saveRecipient(NotificationType.BACKUP, settings(true, Frequency.QUARTERLY, DateUtils.addDays(new Date(), -40)));
 
@@ -169,7 +166,7 @@ public class RecipientRepositoryTest {
 	}
 
 	@Test
-	public void shouldFindReadyForRemindWhenFrequencyIsMonthlyAndLastNotifiedWas31DaysAgo() {
+	void shouldFindReadyForRemindWhenFrequencyIsMonthlyAndLastNotifiedWas31DaysAgo() {
 
 		saveRecipient(NotificationType.REMIND, settings(true, Frequency.MONTHLY, DateUtils.addDays(new Date(), -31)));
 
@@ -178,7 +175,7 @@ public class RecipientRepositoryTest {
 	}
 
 	@Test
-	public void shouldNotFindReadyForRemindWhenLastNotifiedIsMissing() {
+	void shouldNotFindReadyForRemindWhenLastNotifiedIsMissing() {
 
 		saveRecipient(NotificationType.REMIND, settings(true, Frequency.WEEKLY, null));
 
@@ -186,7 +183,7 @@ public class RecipientRepositoryTest {
 	}
 
 	@Test
-	public void shouldSelectOnlyRecipientsNotifiedStrictlyBeforeCutoff() {
+	void shouldSelectOnlyRecipientsNotifiedStrictlyBeforeCutoff() {
 
 		Date cutoff = DateUtils.addDays(new Date(), -7);
 		Date never = new Date(0);
@@ -199,7 +196,7 @@ public class RecipientRepositoryTest {
 	}
 
 	@Test
-	public void shouldUseCalendarDaysWhenWeeklyCutoffCrossesSpringForwardTransition() {
+	void shouldUseCalendarDaysWhenWeeklyCutoffCrossesSpringForwardTransition() {
 
 		ZoneId zone = ZoneId.of("America/New_York");
 		ZonedDateTime now = ZonedDateTime.of(2026, 3, 9, 12, 0, 0, 0, zone);
@@ -211,7 +208,7 @@ public class RecipientRepositoryTest {
 	}
 
 	@Test
-	public void shouldUseCalendarDaysWhenWeeklyCutoffCrossesFallBackTransition() {
+	void shouldUseCalendarDaysWhenWeeklyCutoffCrossesFallBackTransition() {
 
 		ZoneId zone = ZoneId.of("America/New_York");
 		ZonedDateTime now = ZonedDateTime.of(2026, 11, 2, 12, 0, 0, 0, zone);
@@ -234,7 +231,7 @@ public class RecipientRepositoryTest {
 		Recipient recipient = new Recipient();
 		recipient.setAccountName("test");
 		recipient.setEmail("test@test.com");
-		recipient.setScheduledNotifications(ImmutableMap.of(type, settings));
+		recipient.setScheduledNotifications(Map.of(type, settings));
 		repository.save(recipient);
 	}
 }

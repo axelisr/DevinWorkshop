@@ -1,34 +1,32 @@
 package com.piggymetrics.notification.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableMap;
 import com.piggymetrics.notification.domain.Frequency;
 import com.piggymetrics.notification.domain.NotificationSettings;
 import com.piggymetrics.notification.domain.NotificationType;
 import com.piggymetrics.notification.domain.Recipient;
 import com.piggymetrics.notification.service.RecipientService;
 import com.sun.security.auth.UserPrincipal;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import java.util.Map;
+
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
+import static org.mockito.MockitoAnnotations.openMocks;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest
-public class RecipientControllerTest {
+class RecipientControllerTest {
 
 	private static final ObjectMapper mapper = new ObjectMapper();
 
@@ -40,14 +38,14 @@ public class RecipientControllerTest {
 
 	private MockMvc mockMvc;
 
-	@Before
-	public void setup() {
-		initMocks(this);
+	@BeforeEach
+	void setup() {
+		openMocks(this);
 		this.mockMvc = MockMvcBuilders.standaloneSetup(recipientController).build();
 	}
 
 	@Test
-	public void shouldSaveCurrentRecipientSettings() throws Exception {
+	void shouldSaveCurrentRecipientSettings() throws Exception {
 
 		Recipient recipient = getStubRecipient();
 		String json = mapper.writeValueAsString(recipient);
@@ -57,7 +55,7 @@ public class RecipientControllerTest {
 	}
 
 	@Test
-	public void shouldGetCurrentRecipientSettings() throws Exception {
+	void shouldGetCurrentRecipientSettings() throws Exception {
 
 		Recipient recipient = getStubRecipient();
 		when(recipientService.findByAccountName(recipient.getAccountName())).thenReturn(recipient);
@@ -82,7 +80,7 @@ public class RecipientControllerTest {
 		Recipient recipient = new Recipient();
 		recipient.setAccountName("test");
 		recipient.setEmail("test@test.com");
-		recipient.setScheduledNotifications(ImmutableMap.of(
+		recipient.setScheduledNotifications(Map.of(
 				NotificationType.BACKUP, backup,
 				NotificationType.REMIND, remind
 		));
