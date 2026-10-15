@@ -1,11 +1,12 @@
-security:
-  oauth2:
-    client:
-      clientId: statistics-service
-      clientSecret: ${STATISTICS_SERVICE_PASSWORD}
-      accessTokenUri: http://auth-service:5000/uaa/oauth/token
-      grant-type: client_credentials
-      scope: server
+piggymetrics:
+  security:
+    user-info-uri: http://auth-service:5000/uaa/users/current
+
+resilience4j:
+  timelimiter:
+    configs:
+      default:
+        timeout-duration: 20s
 
 spring:
   data:

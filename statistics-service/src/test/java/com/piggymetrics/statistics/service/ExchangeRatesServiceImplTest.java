@@ -4,20 +4,22 @@ import com.google.common.collect.ImmutableMap;
 import com.piggymetrics.statistics.client.ExchangeRatesClient;
 import com.piggymetrics.statistics.domain.Currency;
 import com.piggymetrics.statistics.domain.ExchangeRatesContainer;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
-import static org.mockito.MockitoAnnotations.initMocks;
 
-public class ExchangeRatesServiceImplTest {
+@ExtendWith(MockitoExtension.class)
+class ExchangeRatesServiceImplTest {
 
 	@InjectMocks
 	private ExchangeRatesServiceImpl ratesService;
@@ -25,13 +27,8 @@ public class ExchangeRatesServiceImplTest {
 	@Mock
 	private ExchangeRatesClient client;
 
-	@Before
-	public void setup() {
-		initMocks(this);
-	}
-
 	@Test
-	public void shouldReturnCurrentRatesWhenContainerIsEmptySoFar() {
+	void shouldReturnCurrentRatesWhenContainerIsEmptySoFar() {
 
 		ExchangeRatesContainer container = new ExchangeRatesContainer();
 		container.setRates(ImmutableMap.of(
@@ -50,7 +47,7 @@ public class ExchangeRatesServiceImplTest {
 	}
 
 	@Test
-	public void shouldNotRequestRatesWhenTodaysContainerAlreadyExists() {
+	void shouldNotRequestRatesWhenTodaysContainerAlreadyExists() {
 
 		ExchangeRatesContainer container = new ExchangeRatesContainer();
 		container.setRates(ImmutableMap.of(
@@ -70,7 +67,7 @@ public class ExchangeRatesServiceImplTest {
 	}
 
 	@Test
-	public void shouldConvertCurrency() {
+	void shouldConvertCurrency() {
 
 		ExchangeRatesContainer container = new ExchangeRatesContainer();
 		container.setRates(ImmutableMap.of(
@@ -88,8 +85,8 @@ public class ExchangeRatesServiceImplTest {
 		assertTrue(expectedConvertionResult.compareTo(result) == 0);
 	}
 
-	@Test(expected = IllegalArgumentException.class)
-	public void shouldFailToConvertWhenAmountIsNull() {
-		ratesService.convert(Currency.EUR, Currency.RUB, null);
+	@Test
+	void shouldFailToConvertWhenAmountIsNull() {
+		assertThrows(IllegalArgumentException.class, () -> ratesService.convert(Currency.EUR, Currency.RUB, null));
 	}
 }
